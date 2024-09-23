@@ -1,0 +1,83 @@
+_schema-version: "3.2"
+ID: CandidatePhotoUpload
+version: 0.0.1
+modules:
+- name: CandidatePhotoUpload-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: CandidatePhotoUpload-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - candidatephotoupload.zip
+      name: candidatephotoupload
+      target-path: resources/
+- name: candidatephotoupload
+  type: html5
+  path: candidatephotoupload
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+- name: CandidatePhotoUpload-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: CandidatePhotoUpload-destination-service
+    parameters:
+      content-target: true
+  - name: CandidatePhotoUpload-repo-host
+    parameters:
+      service-key:
+        name: CandidatePhotoUpload-repo-host-key
+  - name: uaa_CandidatePhotoUpload
+    parameters:
+      service-key:
+        name: uaa_CandidatePhotoUpload-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: candidatephotoupload_CandidatePhotoUpload_repo_host
+          ServiceInstanceName: CandidatePhotoUpload-html5-srv
+          ServiceKeyName: CandidatePhotoUpload-repo-host-key
+          sap.cloud.service: candidatephotoupload
+        - Authentication: OAuth2UserTokenExchange
+          Name: candidatephotoupload_uaa_CandidatePhotoUpload
+          ServiceInstanceName: CandidatePhotoUpload-xsuaa-service
+          ServiceKeyName: uaa_CandidatePhotoUpload-key
+          sap.cloud.service: candidatephotoupload
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+resources:
+- name: CandidatePhotoUpload-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: CandidatePhotoUpload-html5-srv
+    service-plan: app-host
+- name: CandidatePhotoUpload-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      version: 1.0.0
+    service: destination
+    service-name: CandidatePhotoUpload-destination-service
+    service-plan: lite
+- name: uaa_CandidatePhotoUpload
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: CandidatePhotoUpload-xsuaa-service
+    service-plan: application
+parameters:
+  deploy_mode: html5-repo
